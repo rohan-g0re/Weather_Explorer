@@ -1,8 +1,8 @@
-
 import * as React from "react";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
-import { DateRange } from "react-day-picker";
+import { DateRange as DayPickerDateRange } from "react-day-picker";
+import { DateRange } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -53,8 +53,8 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             initialFocus
             mode="range"
             defaultMonth={dateRange?.from}
-            selected={dateRange}
-            onSelect={onDateRangeChange}
+            selected={dateRange as DayPickerDateRange}
+            onSelect={onDateRangeChange as (range: DayPickerDateRange | undefined) => void}
             numberOfMonths={2}
             className={cn("p-3 pointer-events-auto")}
           />

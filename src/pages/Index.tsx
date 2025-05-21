@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   getWeatherData,
@@ -164,6 +163,48 @@ const Index = () => {
     }
   };
 
+  // Add this new function to save historical weather data
+  const handleSaveHistoricalWeather = () => {
+    // Don't do anything if there's no historical weather data
+    if (weatherHistory.length === 0) return;
+
+    try {
+      // Create a variable to track how many records were saved successfully
+      let savedCount = 0;
+      const newSavedRecords = [];
+
+      // Loop through each historical weather record and save it individually
+      for (const weatherRecord of weatherHistory) {
+        // Skip records that might already have an ID (meaning they're already saved)
+        if (weatherRecord.id) continue;
+
+        // Save the weather record to localStorage
+        const id = saveWeatherData(weatherRecord);
+        
+        // Add the newly saved record (with its ID) to our tracking array
+        newSavedRecords.push({ ...weatherRecord, id });
+        
+        // Increment our counter
+        savedCount++;
+      }
+
+      // Update the savedWeather state with the newly saved records
+      if (newSavedRecords.length > 0) {
+        setSavedWeather(prev => [...prev, ...newSavedRecords]);
+      }
+
+      // Show appropriate success message based on how many records were saved
+      if (savedCount > 0) {
+        toast.success(`Saved ${savedCount} historical weather records`);
+      } else {
+        toast.info('No new records to save');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save historical weather data');
+    }
+  };
+
   return (
     <div className={`min-h-screen ${backgroundClass}`}>
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -195,20 +236,20 @@ const Index = () => {
             </TabsTrigger>
           </TabsList>
 
-          <div className="glass-card rounded-xl p-6 mb-8">
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="w-full md:w-2/3">
-                <LocationSearch onSelectLocation={handleSelectLocation} />
+          {activeTab === 'weather' && (
+            <div className="glass-card rounded-xl p-6 mb-8">
+              <div className="flex flex-col md:flex-row gap-6">
+                <div className="w-full md:w-2/3">
+                  <LocationSearch onSelectLocation={handleSelectLocation} />
+                </div>
+                <div className="w-full md:w-1/3">
+                  <DateRangePicker 
+                    dateRange={dateRange} 
+                    onDateRangeChange={setDateRange} 
+                  />
+                </div>
               </div>
-              <div className="w-full md:w-1/3">
-                <DateRangePicker 
-                  dateRange={dateRange} 
-                  onDateRangeChange={setDateRange} 
-                />
-              </div>
-            </div>
 
-            {activeTab !== 'weather' && (
               <div className="mt-4 flex justify-end">
                 <button 
                   onClick={handleDateRangeSearch}
@@ -218,9 +259,18 @@ const Index = () => {
                   <Search className="h-4 w-4 mr-2" />
                   Search Historical Weather
                 </button>
+                {weatherHistory.length > 0 && (
+                  <button
+                    onClick={handleSaveHistoricalWeather}
+                    className="bg-white/30 hover:bg-white/50 text-white px-4 py-2 rounded-md flex items-center ml-2"
+                  >
+                    <History className="h-4 w-4 mr-2" />
+                    Save Historical Data
+                  </button>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
           <TabsContent value="weather" className="space-y-6">
             {currentWeather && (
@@ -228,6 +278,27 @@ const Index = () => {
                 weatherData={currentWeather} 
                 onSave={handleSaveCurrentWeather}
               />
+            )}
+            
+            {weatherHistory.length > 0 && (
+              <div className="mb-6 mt-6 glass-card rounded-xl p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold text-white">Historical Weather</h2>
+                  <button
+                    onClick={handleSaveHistoricalWeather}
+                    className="bg-white/30 hover:bg-white/50 text-white px-4 py-2 rounded-md flex items-center"
+                  >
+                    <History className="h-4 w-4 mr-2" />
+                    Save Historical Data
+                  </button>
+                </div>
+                <WeatherHistory 
+                  weatherData={weatherHistory}
+                  onEdit={() => {}}
+                  onDelete={() => {}}
+                  onExport={handleExport}
+                />
+              </div>
             )}
             
             {!currentWeather && selectedLocation && (
@@ -249,18 +320,6 @@ const Index = () => {
 
           <TabsContent value="history">
             <div className="space-y-6">
-              {weatherHistory.length > 0 && (
-                <div className="mb-6">
-                  <h2 className="text-xl font-semibold text-white mb-4">Historical Weather</h2>
-                  <WeatherHistory 
-                    weatherData={weatherHistory}
-                    onEdit={() => {}}
-                    onDelete={() => {}}
-                    onExport={handleExport}
-                  />
-                </div>
-              )}
-              
               <div>
                 <h2 className="text-xl font-semibold text-white mb-4">Saved Weather Records</h2>
                 <WeatherHistory 

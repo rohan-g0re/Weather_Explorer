@@ -1,12 +1,304 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  getWeatherData,
+  getHistoricalWeather,
+  saveWeatherData,
+  getAllWeatherData,
+  updateWeatherData,
+  deleteWeatherData
+} from '@/lib/api';
+import { DateRange, ExportFormat, LocationSearchResult, WeatherData, WeatherLocation } from '@/lib/types';
+import { getBackgroundClass } from '@/lib/weather-utils';
+import { exportData } from '@/lib/export-utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from 'sonner';
+
+// Components
+import LocationSearch from '@/components/LocationSearch';
+import CurrentWeather from '@/components/CurrentWeather';
+import DateRangePicker from '@/components/DateRangePicker';
+import WeatherHistory from '@/components/WeatherHistory';
+import EditWeatherRecord from '@/components/EditWeatherRecord';
+import SimpleMap from '@/components/SimpleMap';
+
+// Icons
+import { Search, CloudRain, History, MapPin } from 'lucide-react';
 
 const Index = () => {
+  // State
+  const [selectedLocation, setSelectedLocation] = useState<WeatherLocation | null>(null);
+  const [currentWeather, setCurrentWeather] = useState<WeatherData | null>(null);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [weatherHistory, setWeatherHistory] = useState<WeatherData[]>([]);
+  const [savedWeather, setSavedWeather] = useState<WeatherData[]>([]);
+  const [editRecord, setEditRecord] = useState<WeatherData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('weather');
+
+  // Background class based on current weather
+  const backgroundClass = useMemo(() => 
+    getBackgroundClass(currentWeather), [currentWeather]
+  );
+
+  // Load saved weather data from local storage
+  useEffect(() => {
+    const loadSavedData = () => {
+      const data = getAllWeatherData();
+      setSavedWeather(data);
+    };
+
+    loadSavedData();
+  }, []);
+
+  // Handle location selection
+  const handleSelectLocation = async (location: LocationSearchResult) => {
+    const weatherLocation: WeatherLocation = {
+      name: location.name,
+      lat: location.lat,
+      lon: location.lon,
+      country: location.country,
+      state: location.state
+    };
+
+    setSelectedLocation(weatherLocation);
+    
+    try {
+      const data = await getWeatherData(weatherLocation);
+      if (data) {
+        setCurrentWeather(data);
+        toast.success(`Weather loaded for ${location.name}`);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load weather data');
+    }
+  };
+
+  // Handle date range search
+  const handleDateRangeSearch = async () => {
+    if (!selectedLocation || !dateRange?.from || !dateRange?.to) {
+      toast.error('Please select both a location and date range');
+      return;
+    }
+
+    try {
+      const startDate = dateRange.from.toISOString();
+      const endDate = dateRange.to.toISOString();
+      
+      const data = await getHistoricalWeather(selectedLocation, startDate, endDate);
+      
+      if (data.length > 0) {
+        setWeatherHistory(data);
+        toast.success(`Found weather data for the selected period`);
+      } else {
+        toast.info('No weather data available for the selected period');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to load historical weather data');
+    }
+  };
+
+  // Handle save current weather
+  const handleSaveCurrentWeather = () => {
+    if (!currentWeather) return;
+
+    try {
+      const id = saveWeatherData(currentWeather);
+      setSavedWeather(prev => [...prev, { ...currentWeather, id }]);
+      toast.success('Weather data saved successfully');
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to save weather data');
+    }
+  };
+
+  // Handle edit record
+  const handleEditRecord = (id: string) => {
+    const record = savedWeather.find(item => item.id === id);
+    if (record) {
+      setEditRecord(record);
+      setIsEditing(true);
+    }
+  };
+
+  // Handle save edited record
+  const handleSaveEditedRecord = (updatedData: WeatherData) => {
+    try {
+      if (updateWeatherData(updatedData.id!, updatedData)) {
+        setSavedWeather(prev => 
+          prev.map(item => item.id === updatedData.id ? updatedData : item)
+        );
+        setIsEditing(false);
+        setEditRecord(null);
+        toast.success('Weather record updated successfully');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to update weather record');
+    }
+  };
+
+  // Handle delete record
+  const handleDeleteRecord = (id: string) => {
+    try {
+      if (deleteWeatherData(id)) {
+        setSavedWeather(prev => prev.filter(item => item.id !== id));
+        toast.success('Weather record deleted successfully');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to delete weather record');
+    }
+  };
+
+  // Handle export
+  const handleExport = (format: string) => {
+    try {
+      exportData(savedWeather, format as ExportFormat);
+      toast.success(`Data exported in ${format.toUpperCase()} format`);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to export data');
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className={`min-h-screen ${backgroundClass}`}>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        <header className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-white">Weather Dashboard</h1>
+          <p className="text-white/80 mt-2">
+            Search for current weather and historical data
+          </p>
+        </header>
+
+        <Tabs 
+          defaultValue="weather" 
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
+          <TabsList className="grid grid-cols-3 max-w-md mx-auto mb-8 bg-white/20 backdrop-blur-sm">
+            <TabsTrigger value="weather" className="text-white data-[state=active]:bg-white/30">
+              <CloudRain className="h-4 w-4 mr-2" />
+              Weather
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-white data-[state=active]:bg-white/30">
+              <History className="h-4 w-4 mr-2" />
+              History
+            </TabsTrigger>
+            <TabsTrigger value="map" className="text-white data-[state=active]:bg-white/30">
+              <MapPin className="h-4 w-4 mr-2" />
+              Map
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="glass-card rounded-xl p-6 mb-8">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-2/3">
+                <LocationSearch onSelectLocation={handleSelectLocation} />
+              </div>
+              <div className="w-full md:w-1/3">
+                <DateRangePicker 
+                  dateRange={dateRange} 
+                  onDateRangeChange={setDateRange} 
+                />
+              </div>
+            </div>
+
+            {activeTab !== 'weather' && (
+              <div className="mt-4 flex justify-end">
+                <button 
+                  onClick={handleDateRangeSearch}
+                  className="bg-white/30 hover:bg-white/50 text-white px-4 py-2 rounded-md flex items-center"
+                  disabled={!selectedLocation || !dateRange?.from || !dateRange?.to}
+                >
+                  <Search className="h-4 w-4 mr-2" />
+                  Search Historical Weather
+                </button>
+              </div>
+            )}
+          </div>
+
+          <TabsContent value="weather" className="space-y-6">
+            {currentWeather && (
+              <CurrentWeather 
+                weatherData={currentWeather} 
+                onSave={handleSaveCurrentWeather}
+              />
+            )}
+            
+            {!currentWeather && selectedLocation && (
+              <div className="text-center py-8">
+                <p className="text-white">Loading weather data...</p>
+              </div>
+            )}
+            
+            {!currentWeather && !selectedLocation && (
+              <div className="text-center py-12">
+                <CloudRain className="h-16 w-16 mx-auto text-white/50 mb-4 animate-float" />
+                <h2 className="text-2xl font-medium text-white">Enter a location to get started</h2>
+                <p className="text-white/80 mt-2">
+                  Search for a city, zip code, or landmark above
+                </p>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="history">
+            <div className="space-y-6">
+              {weatherHistory.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-xl font-semibold text-white mb-4">Historical Weather</h2>
+                  <WeatherHistory 
+                    weatherData={weatherHistory}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                    onExport={handleExport}
+                  />
+                </div>
+              )}
+              
+              <div>
+                <h2 className="text-xl font-semibold text-white mb-4">Saved Weather Records</h2>
+                <WeatherHistory 
+                  weatherData={savedWeather}
+                  onEdit={handleEditRecord}
+                  onDelete={handleDeleteRecord}
+                  onExport={handleExport}
+                />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="map">
+            {selectedLocation ? (
+              <SimpleMap location={selectedLocation} />
+            ) : (
+              <div className="text-center py-12 glass-card rounded-xl">
+                <MapPin className="h-16 w-16 mx-auto text-white/50 mb-4" />
+                <h2 className="text-2xl font-medium text-white">No location selected</h2>
+                <p className="text-white/80 mt-2">
+                  Search for a location to see it on the map
+                </p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* Edit dialog */}
+      <EditWeatherRecord
+        isOpen={isEditing}
+        weatherData={editRecord}
+        onClose={() => {
+          setIsEditing(false);
+          setEditRecord(null);
+        }}
+        onSave={handleSaveEditedRecord}
+      />
     </div>
   );
 };

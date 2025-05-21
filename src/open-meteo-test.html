@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open-Meteo API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .result {
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .success {
+            border-left: 5px solid #4CAF50;
+        }
+        .error {
+            border-left: 5px solid #F44336;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        h3 {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Open-Meteo API Test</h1>
+    <p>This page tests if Open-Meteo APIs are working correctly. It will test both the Geocoding API and the Weather API.</p>
+    
+    <div>
+        <input type="text" id="cityInput" style="width: 300px;" value="London" placeholder="Enter a city name">
+        <button onclick="testAPIs()">Test APIs</button>
+    </div>
+    
+    <h3>Geocoding API Test</h3>
+    <div id="geoResult" class="result">Results will appear here...</div>
+    
+    <h3>Weather API Test</h3>
+    <div id="weatherResult" class="result">Results will appear here...</div>
+    
+    <h3>Historical Weather API Test</h3>
+    <div id="historicalResult" class="result">Results will appear here...</div>
+    
+    <script>
+        async function testAPIs() {
+            const cityName = document.getElementById('cityInput').value.trim();
+            const geoResultEl = document.getElementById('geoResult');
+            const weatherResultEl = document.getElementById('weatherResult');
+            const historicalResultEl = document.getElementById('historicalResult');
+            
+            if (!cityName) {
+                geoResultEl.textContent = "Please enter a city name";
+                geoResultEl.className = "result error";
+                return;
+            }
+            
+            // Reset result displays
+            geoResultEl.textContent = "Testing Geocoding API...";
+            geoResultEl.className = "result";
+            weatherResultEl.textContent = "Waiting for geocoding results...";
+            weatherResultEl.className = "result";
+            historicalResultEl.textContent = "Waiting for geocoding results...";
+            historicalResultEl.className = "result";
+            
+            // Test Geocoding API
+            try {
+                const geoApiUrl = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(cityName)}&count=5&language=en&format=json`;
+                
+                console.log("Making request to:", geoApiUrl);
+                const geoResponse = await fetch(geoApiUrl);
+                
+                if (!geoResponse.ok) {
+                    const errorText = await geoResponse.text();
+                    geoResultEl.textContent = `Error: ${geoResponse.status} ${geoResponse.statusText}\n${errorText}`;
+                    geoResultEl.className = "result error";
+                    return;
+                }
+                
+                const geoData = await geoResponse.json();
+                
+                if (!geoData.results || !Array.isArray(geoData.results) || geoData.results.length === 0) {
+                    geoResultEl.textContent = "No results found";
+                    geoResultEl.className = "result error";
+                    return;
+                }
+                
+                geoResultEl.textContent = "✅ Geocoding API working!\n\nSample Result:\n" + 
+                    JSON.stringify(geoData.results[0], null, 2);
+                geoResultEl.className = "result success";
+                
+                // Now test Weather API
+                const { latitude, longitude } = geoData.results[0];
+                const weatherApiUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,rain,showers,snowfall,weather_code,cloud_cover,pressure_msl,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m&hourly=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset&timezone=auto`;
+                
+                weatherResultEl.textContent = "Testing Weather API...";
+                
+                console.log("Making request to Weather API...");
+                const weatherResponse = await fetch(weatherApiUrl);
+                
+                if (!weatherResponse.ok) {
+                    const errorText = await weatherResponse.text();
+                    weatherResultEl.textContent = `Error: ${weatherResponse.status} ${weatherResponse.statusText}\n${errorText}`;
+                    weatherResultEl.className = "result error";
+                    return;
+                }
+                
+                const weatherData = await weatherResponse.json();
+                
+                if (!weatherData || !weatherData.current) {
+                    weatherResultEl.textContent = "Unexpected data format";
+                    weatherResultEl.className = "result error";
+                    return;
+                }
+                
+                weatherResultEl.textContent = "✅ Weather API working!\n\nSample Result:\n" + 
+                    JSON.stringify({
+                        location: geoData.results[0].name,
+                        country: geoData.results[0].country,
+                        temperature: weatherData.current.temperature_2m,
+                        humidity: weatherData.current.relative_humidity_2m,
+                        weather_code: weatherData.current.weather_code
+                    }, null, 2);
+                weatherResultEl.className = "result success";
+                
+                // Test Historical Weather API
+                historicalResultEl.textContent = "Testing Historical Weather API...";
+                
+                // Get dates for last 7 days
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(startDate.getDate() - 7);
+                
+                const formattedStartDate = startDate.toISOString().split('T')[0];
+                const formattedEndDate = endDate.toISOString().split('T')[0];
+                
+                const historicalApiUrl = `https://archive-api.open-meteo.com/v1/archive?latitude=${latitude}&longitude=${longitude}&start_date=${formattedStartDate}&end_date=${formattedEndDate}&daily=weather_code,temperature_2m_max,temperature_2m_min,temperature_2m_mean,precipitation_sum,rain_sum,snowfall_sum&timezone=auto`;
+                
+                console.log("Making request to Historical API...");
+                const historicalResponse = await fetch(historicalApiUrl);
+                
+                if (!historicalResponse.ok) {
+                    const errorText = await historicalResponse.text();
+                    historicalResultEl.textContent = `Error: ${historicalResponse.status} ${historicalResponse.statusText}\n${errorText}`;
+                    historicalResultEl.className = "result error";
+                    return;
+                }
+                
+                const historicalData = await historicalResponse.json();
+                
+                if (!historicalData || !historicalData.daily) {
+                    historicalResultEl.textContent = "Unexpected data format";
+                    historicalResultEl.className = "result error";
+                    return;
+                }
+                
+                historicalResultEl.textContent = "✅ Historical Weather API working!\n\nSample Result:\n" + 
+                    JSON.stringify({
+                        location: geoData.results[0].name,
+                        dates: historicalData.daily.time,
+                        temperatures: historicalData.daily.temperature_2m_mean,
+                        weather_codes: historicalData.daily.weather_code
+                    }, null, 2);
+                historicalResultEl.className = "result success";
+                
+            } catch (error) {
+                console.error("Test failed:", error);
+                geoResultEl.textContent = `Error: ${error.message}`;
+                geoResultEl.className = "result error";
+            }
+        }
+    </script>
+</body>
+</html> 

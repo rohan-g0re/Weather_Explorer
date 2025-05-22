@@ -74,6 +74,20 @@ const Index = () => {
       return;
     }
 
+    // Check if selected dates are in the future
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to beginning of day for proper comparison
+    
+    if (dateRange?.from && dateRange.from > today) {
+      toast.error('Cannot search for future dates. Please select dates in the past.');
+      return;
+    }
+    
+    if (dateRange?.to && dateRange.to > today) {
+      toast.error('Cannot search for future dates. Please select dates in the past.');
+      return;
+    }
+
     try {
       // First, get the current weather for the selected location
       const currentData = await getWeatherData(selectedLocation);

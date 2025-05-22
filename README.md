@@ -3,8 +3,6 @@
 ## Overview
 Weather Explorer is a production-ready weather application that provides real-time and historical weather data visualization for global locations with an interactive map interface.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-
 ## Features
 - Location-based global weather search with autocomplete
 - Current and historical weather data fetching
@@ -79,11 +77,13 @@ Open `http://localhost:8080` in your browser.
 ## Contributing
 Contributions welcome via Pull Requests. Please ensure code passes linting and tests.
 
-## License
-[MIT](LICENSE)
-
 ## Acknowledgments
 - [Open-Meteo](https://open-meteo.com/) - Weather API
 - [OpenStreetMap](https://www.openstreetmap.org/) - Map data
 - [Leaflet](https://leafletjs.com/) - Mapping library
 - [Shadcn UI](https://ui.shadcn.com/) - UI components
+
+## Collaborators
+- [Perplexity.ai](https://www.perplexity.ai/) - Requirement Analysis and PRD
+- [Lovable.dev](https://lovable.dev/) - Boilerplate, Prototyping
+- [Cursor](https://www.cursor.com/) - IDE

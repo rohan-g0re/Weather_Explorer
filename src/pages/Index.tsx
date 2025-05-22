@@ -61,41 +61,48 @@ const Index = () => {
     };
 
     setSelectedLocation(weatherLocation);
-    
-    try {
-      const data = await getWeatherData(weatherLocation);
-      if (data) {
-        setCurrentWeather(data);
-        toast.success(`Weather loaded for ${location.name}`);
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error('Failed to load weather data');
-    }
+    // Clear any previous weather data when selecting a new location
+    setCurrentWeather(null);
+    setWeatherHistory([]);
+    toast.success(`Location set to ${location.name}`);
   };
 
   // Handle date range search
   const handleDateRangeSearch = async () => {
-    if (!selectedLocation || !dateRange?.from || !dateRange?.to) {
-      toast.error('Please select both a location and date range');
+    if (!selectedLocation) {
+      toast.error('Please select a location');
       return;
     }
 
     try {
-      const startDate = dateRange.from.toISOString();
-      const endDate = dateRange.to.toISOString();
-      
-      const data = await getHistoricalWeather(selectedLocation, startDate, endDate);
-      
-      if (data.length > 0) {
-        setWeatherHistory(data);
-        toast.success(`Found weather data for the selected period`);
+      // First, get the current weather for the selected location
+      const currentData = await getWeatherData(selectedLocation);
+      if (currentData) {
+        setCurrentWeather(currentData);
+        toast.success(`Current weather loaded for ${selectedLocation.name}`);
+      }
+
+      // If date range is selected, also get historical data
+      if (dateRange?.from && dateRange?.to) {
+        const startDate = dateRange.from.toISOString();
+        const endDate = dateRange.to.toISOString();
+        
+        const data = await getHistoricalWeather(selectedLocation, startDate, endDate);
+        
+        if (data.length > 0) {
+          setWeatherHistory(data);
+          toast.success(`Found historical weather data for the selected period`);
+        } else {
+          setWeatherHistory([]);
+          toast.info('No historical weather data available for the selected period');
+        }
       } else {
-        toast.info('No weather data available for the selected period');
+        // Clear any historical data if only getting current weather
+        setWeatherHistory([]);
       }
     } catch (error) {
       console.error(error);
-      toast.error('Failed to load historical weather data');
+      toast.error('Failed to load weather data');
     }
   };
 
@@ -126,9 +133,15 @@ const Index = () => {
   const handleSaveEditedRecord = (updatedData: WeatherData) => {
     try {
       if (updateWeatherData(updatedData.id!, updatedData)) {
+        // Update the local state to reflect the changes
         setSavedWeather(prev => 
           prev.map(item => item.id === updatedData.id ? updatedData : item)
         );
+        
+        // Refresh the data from localStorage to ensure consistency
+        const refreshedData = getAllWeatherData();
+        setSavedWeather(refreshedData);
+        
         setIsEditing(false);
         setEditRecord(null);
         toast.success('Weather record updated successfully');
@@ -250,24 +263,15 @@ const Index = () => {
                 </div>
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <button 
                   onClick={handleDateRangeSearch}
-                  className="bg-white/30 hover:bg-white/50 text-white px-4 py-2 rounded-md flex items-center"
-                  disabled={!selectedLocation || !dateRange?.from || !dateRange?.to}
+                  className="bg-white/30 hover:bg-white/50 text-white px-6 py-2 rounded-md flex items-center"
+                  disabled={!selectedLocation}
                 >
                   <Search className="h-4 w-4 mr-2" />
-                  Search Historical Weather
+                  GET WEATHER
                 </button>
-                {weatherHistory.length > 0 && (
-                  <button
-                    onClick={handleSaveHistoricalWeather}
-                    className="bg-white/30 hover:bg-white/50 text-white px-4 py-2 rounded-md flex items-center ml-2"
-                  >
-                    <History className="h-4 w-4 mr-2" />
-                    Save Historical Data
-                  </button>
-                )}
               </div>
             </div>
           )}
@@ -296,14 +300,18 @@ const Index = () => {
                   weatherData={weatherHistory}
                   onEdit={() => {}}
                   onDelete={() => {}}
-                  onExport={handleExport}
                 />
               </div>
             )}
             
             {!currentWeather && selectedLocation && (
-              <div className="text-center py-8">
-                <p className="text-white">Loading weather data...</p>
+              <div className="text-center py-8 glass-card rounded-xl">
+                <p className="text-white text-lg">
+                  Location selected: <strong>{selectedLocation.name}</strong>
+                </p>
+                <p className="text-white/80 mt-2">
+                  Select a date range and click "Search Historical Weather" to view weather data
+                </p>
               </div>
             )}
             

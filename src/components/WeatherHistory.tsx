@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,7 +13,7 @@ interface WeatherHistoryProps {
   weatherData: WeatherData[];
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
-  onExport: (format: string) => void;
+  onExport?: (format: string) => void;
 }
 
 const WeatherHistory: React.FC<WeatherHistoryProps> = ({ weatherData, onEdit, onDelete, onExport }) => {
@@ -34,27 +33,29 @@ const WeatherHistory: React.FC<WeatherHistoryProps> = ({ weatherData, onEdit, on
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Weather History</CardTitle>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <FileDown className="h-4 w-4 mr-1" /> Export
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent>
-            <DropdownMenuItem onClick={() => onExport('json')}>
-              JSON
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onExport('csv')}>
-              CSV
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onExport('xml')}>
-              XML
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onExport('md')}>
-              Markdown
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {onExport && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                <FileDown className="h-4 w-4 mr-1" /> Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onExport('json')}>
+                JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExport('csv')}>
+                CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExport('xml')}>
+                XML
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onExport('md')}>
+                Markdown
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">

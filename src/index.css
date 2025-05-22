@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -114,5 +113,47 @@
 
   .glass-card {
     @apply bg-white/30 dark:bg-gray-800/30 backdrop-blur-md border border-white/20 dark:border-gray-700/20 shadow-lg;
+  }
+  
+  /* Mapbox styles */
+  .mapboxgl-map {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .mapboxgl-canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  
+  .mapboxgl-ctrl-logo {
+    margin: 0 !important;
+  }
+  
+  /* Leaflet map styles */
+  .custom-popup .leaflet-popup-content-wrapper {
+    border-radius: 8px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    padding: 0 4px;
+  }
+  
+  .custom-popup .leaflet-popup-content {
+    margin: 12px 12px;
+    min-width: 180px;
+  }
+  
+  .custom-popup .leaflet-popup-tip {
+    background-color: white;
+    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Fix for Leaflet controls */
+  .leaflet-control-container .leaflet-top,
+  .leaflet-control-container .leaflet-bottom {
+    z-index: 800;
+  }
+  
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+    background-color: white;
   }
 }

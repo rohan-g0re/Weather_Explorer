@@ -20,6 +20,8 @@ import DateRangePicker from '@/components/DateRangePicker';
 import WeatherHistory from '@/components/WeatherHistory';
 import EditWeatherRecord from '@/components/EditWeatherRecord';
 import SimpleMap from '@/components/SimpleMap';
+import MapboxMap from '@/components/MapboxMap';
+import LeafletMap from '@/components/LeafletMap';
 
 // Icons
 import { Search, CloudRain, History, MapPin } from 'lucide-react';
@@ -363,10 +365,53 @@ const Index = () => {
 
           <TabsContent value="map">
             {savedWeather.length > 0 ? (
-              <SimpleMap 
-                locations={getUniqueLocations(savedWeather)}
-                title="All Saved Locations"
-              />
+              <div className="space-y-6">
+                <div className="glass-card rounded-xl p-4">
+                  <p className="text-white text-sm">
+                    This map shows all your saved locations. Click on a marker to view details about that location.
+                  </p>
+                </div>
+                
+                {/* Map component */}
+                <LeafletMap 
+                  locations={getUniqueLocations(savedWeather)}
+                  title="All Saved Locations"
+                />
+                
+                {/* Separate card for locations list */}
+                <div className="glass-card rounded-xl p-4">
+                  <h3 className="text-lg font-semibold text-white mb-3">Saved Locations ({getUniqueLocations(savedWeather).length})</h3>
+                  
+                  {getUniqueLocations(savedWeather).length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {getUniqueLocations(savedWeather).map((loc, index) => (
+                        <div 
+                          key={`${loc.lat}-${loc.lon}-${index}`} 
+                          className="bg-white/20 backdrop-blur-sm rounded-lg p-3 border border-white/10 hover:bg-white/30 transition-colors"
+                        >
+                          <div className="flex items-center mb-1">
+                            <div className="bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center mr-2 font-bold text-xs">
+                              {index + 1}
+                            </div>
+                            <h4 className="font-medium text-white">{loc.name}</h4>
+                          </div>
+                          <p className="text-white/80 text-sm">
+                            {loc.country}
+                            {loc.state ? `, ${loc.state}` : ''}
+                          </p>
+                          <p className="text-white/70 text-xs mt-1">
+                            Coordinates: {loc.lat.toFixed(4)}, {loc.lon.toFixed(4)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <p className="text-white/60">No unique locations found in your saved weather data.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
             ) : (
               <div className="text-center py-12 glass-card rounded-xl">
                 <MapPin className="h-16 w-16 mx-auto text-white/50 mb-4" />
@@ -399,9 +444,25 @@ const getUniqueLocations = (weatherData: WeatherData[]): WeatherLocation[] => {
   const locationMap = new Map<string, WeatherLocation>();
   
   weatherData.forEach(data => {
+    // Skip if the location data is incomplete
+    if (!data.location || typeof data.location.lat !== 'number' || typeof data.location.lon !== 'number') {
+      console.warn('Skipping location with invalid coordinates:', data.location);
+      return;
+    }
+    
     const key = `${data.location.lat}-${data.location.lon}`;
     if (!locationMap.has(key)) {
-      locationMap.set(key, data.location);
+      // Ensure all required fields are present
+      const location: WeatherLocation = {
+        id: data.location.id,
+        name: data.location.name || 'Unknown',
+        lat: data.location.lat,
+        lon: data.location.lon,
+        country: data.location.country || '',
+        state: data.location.state
+      };
+      
+      locationMap.set(key, location);
     }
   });
   

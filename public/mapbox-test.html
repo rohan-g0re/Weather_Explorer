@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mapbox Test</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v3.12.0/mapbox-gl.js"></script>
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+    // Public access token
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA';
+    
+    // Create a map instance
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/streets-v12',
+      center: [0, 0],
+      zoom: 1
+    });
+    
+    // Add navigation controls
+    map.addControl(new mapboxgl.NavigationControl());
+    
+    // Add some test markers
+    const locations = [
+      { name: "London", country: "UK", lon: -0.1276, lat: 51.5072 },
+      { name: "New York", country: "USA", lon: -74.0060, lat: 40.7128 },
+      { name: "Tokyo", country: "Japan", lon: 139.6917, lat: 35.6895 },
+      { name: "Sydney", country: "Australia", lon: 151.2093, lat: -33.8688 },
+      { name: "Cape Town", country: "South Africa", lon: 18.4241, lat: -33.9249 }
+    ];
+    
+    // When the map is loaded, add markers
+    map.on('load', () => {
+      console.log('Map loaded');
+      
+      // Create a new bounds object
+      const bounds = new mapboxgl.LngLatBounds();
+      
+      // Add markers for each location
+      locations.forEach(location => {
+        console.log(`Adding marker at [${location.lon}, ${location.lat}]`);
+        
+        // Create marker element
+        const markerEl = document.createElement('div');
+        markerEl.style.width = '30px';
+        markerEl.style.height = '30px';
+        markerEl.style.cursor = 'pointer';
+        markerEl.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+        `;
+        
+        // Create marker and add popup
+        new mapboxgl.Marker(markerEl)
+          .setLngLat([location.lon, location.lat])
+          .setPopup(
+            new mapboxgl.Popup({ offset: 25 })
+              .setHTML(`
+                <h3 style="margin: 0 0 5px 0; font-weight: bold;">${location.name}</h3>
+                <p style="margin: 0;">${location.country}</p>
+              `)
+          )
+          .addTo(map);
+        
+        // Extend bounds to include this location
+        bounds.extend([location.lon, location.lat]);
+      });
+      
+      // Fit map to show all markers
+      map.fitBounds(bounds, {
+        padding: 50,
+        maxZoom: 12
+      });
+    });
+  </script>
+</body>
+</html> 

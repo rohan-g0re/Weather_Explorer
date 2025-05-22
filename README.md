@@ -1,163 +1,89 @@
-# Weather Wisdom Explorer
+# Weather Explorer
 
-## Project Overview
+## Overview
+Weather Explorer is a production-ready weather application that provides real-time and historical weather data visualization for global locations with an interactive map interface.
 
-Weather Wisdom Explorer is a comprehensive weather application that enables users to search for locations worldwide, view current and historical weather data, save their favorite locations, and visualize weather patterns on an interactive map.
-
-![Weather Wisdom Explorer](https://i.imgur.com/YourImageHere.png)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ## Features
+- Location-based global weather search with autocomplete
+- Current and historical weather data fetching
+- Interactive map with custom location markers
+- Local data persistence
+- Multi-format data export (JSON, CSV, XML, PDF, Markdown)
+- Responsive design for all devices
 
-### Core Functionality
+## Technical Implementation
 
-- **Location-based Weather Search**: Search for any location globally with autocomplete suggestions
-- **Current Weather Display**: View detailed current weather conditions with intuitive visual indicators
-- **Historical Weather Data**: Retrieve and analyze weather data for any date range in the past
-- **Data Persistence**: Save weather records locally for future reference
-- **Weather Visualization**: Visual representation of weather data through charts and maps
-- **Data Export**: Export weather data in multiple formats (JSON, CSV, XML, PDF, Markdown)
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+### Architecture
+This application is built on a modern tech stack with an API-first approach:
 
-### Interactive Map Features
+1. **Frontend Framework**
+   - **React** with **TypeScript** for type-safe component development
+   - **Vite** build system with HMR for optimized development workflow
 
-- **Multiple Location Visualization**: View all saved locations on a single interactive map
-- **Custom Markers**: Numbered markers that correspond to the location list for easy reference
-- **Information Popups**: Click on markers to view detailed location information
-- **Separate Location Card List**: Clean, organized display of all saved locations below the map
-- **Dynamic Map Controls**: Zoom, pan, and navigate the map with intuitive controls
+2. **API Integration**
+   - **Open-Meteo API** suite implementation:
+     - Geocoding API for location coordinate conversion
+     - Forecast API for current weather conditions
+     - Archive API for historical weather data retrieval
+   - **React Query** for data fetching, caching and state management
+   - Custom data normalization pipeline for consistent display formatting
 
-## Tech Stack
+3. **Data Visualization**
+   - **Google Maps** component showing current location
+   - **Leaflet.js** integration with **OpenStreetMap** tiles
+   - Dynamic marker generation with location-based indexing
+   - Recharts implementation for weather metrics visualization
 
-The application is built with modern web technologies for optimal performance and user experience:
+4. **State Management**
+   - Client-side persistence via **localStorage**
+   - Optimized data flow with React Query
+   - Custom data transformation utilities for unit conversions
 
-### Core Technologies
-- **React**: Frontend library for building the user interface
-- **TypeScript**: Static typing for improved code quality and developer experience
-- **Vite**: Build tool and development server with fast refresh
-- **TailwindCSS**: Utility-first CSS framework for styling
+5. **UI Implementation**
+   - Component architecture with **Shadcn UI** (Radix UI primitives)
+   - **TailwindCSS** for responsive styling with utility-first approach
+   - **Lucide React** for vector iconography
+   - Mobile-first responsive design methodology
 
-### UI Components and Design
-- **Shadcn UI**: Component library built on Radix UI primitives
-- **Lucide React**: Icon library for weather and UI icons
-- **Tailwind Merge**: For managing Tailwind class combinations
-
-### Data Visualization
-- **Leaflet.js**: Interactive maps for location visualization
-- **Recharts**: Weather data chart visualization
-
-### State Management and Data Handling
-- **React Query**: For data fetching, caching, and state management
-- **Local Storage**: For persisting user data
-
-### External APIs
-- **Open-Meteo API**: Weather data source for current and historical conditions
-- **OpenStreetMap**: Map tiles for the location visualization
-
-## Implementation Details
-
-### Weather Data Retrieval
-
-The application uses the Open-Meteo API to fetch current and historical weather data. This data is processed and normalized to provide consistent information across different time periods. Weather conditions include:
-
-- Temperature (current, min/max, feels like)
-- Humidity and pressure
-- Wind speed and direction
-- Cloud coverage
-- Precipitation
-- Visibility
-- Sunrise and sunset times
-
-### Map Implementation
-
-The map functionality was implemented using Leaflet.js, which provides:
-
-1. **Dynamic Marker Creation**: Custom markers with numbered indicators
-2. **Responsive Map Container**: Automatically adjusts to viewport size
-3. **Custom Popup Design**: Enhanced popup styling for better readability
-4. **Optimized Map Controls**: User-friendly navigation controls
-5. **Automatic Bounds Fitting**: Ensures all locations are visible on map load
-
-The location list has been implemented as a separate card below the map, featuring:
-
-- Matching numbered indicators that correspond to map markers
-- Comprehensive location details including coordinates
-- Hover effects for improved user interaction
-- Responsive grid layout that adapts to different screen sizes
-
-### Data Persistence
-
-Weather data is saved to the browser's localStorage, allowing users to:
-
-- Store unlimited weather records
-- Access saved data between sessions
-- Edit or delete saved records
-- Export data in various formats
-
-## Getting Started
+## Installation
 
 ### Prerequisites
-
-- Node.js (v14 or higher)
+- Node.js (v14+)
 - npm or yarn
 
-### Installation
-
-1. Clone the repository:
+### Setup
 ```sh
-git clone <repository-url>
-```
+# Clone repository
+git clone https://github.com/rohan-g0re/weather-wisdom-explorer.git
 
-2. Navigate to the project directory:
-```sh
-cd weather-wisdom-explorer
-```
+# Navigate to project directory
+cd Weather_Explorer
 
-3. Install dependencies:
-```sh
+# Install dependencies
 npm install
-```
 
-4. Start the development server:
-```sh
+# Start development server
 npm run dev
 ```
-
-5. Open your browser to `http://localhost:5173`
+Open `http://localhost:8080` in your browser.
 
 ## Usage Guide
 
-### Searching for Weather
-
-1. Use the search box to find a location
-2. Select a date range for historical data (optional)
-3. Click "GET WEATHER" to retrieve weather information
-4. View current conditions and historical data (if requested)
-5. Save the weather data using the "Save" button
-
-### Using the Map
-
-1. Navigate to the "Map" tab to view all saved locations
-2. Interact with the map by zooming in/out and panning
-3. Click on markers to view location details
-4. Refer to the location cards below the map for a complete list of saved locations
-
-### Managing Weather Data
-
-1. Use the "History" tab to view all saved weather records
-2. Edit or delete records as needed
-3. Export data in your preferred format
+### Quick Start
+1. **Search**: Enter location → optionally select date range → click "GET WEATHER" → optionally save current or historical data 
+2. **View Map**: Navigate to Map tab to see all saved locations
+3. **Manage Data**: Access History tab to view, edit, export or delete saved records
 
 ## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+Contributions welcome via Pull Requests. Please ensure code passes linting and tests.
 
 ## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+[MIT](LICENSE)
 
 ## Acknowledgments
-
-- [Open-Meteo](https://open-meteo.com/) for providing free weather API
-- [OpenStreetMap](https://www.openstreetmap.org/) for map data
-- [Leaflet](https://leafletjs.com/) for mapping functionality
-- [Shadcn UI](https://ui.shadcn.com/) for the component library
+- [Open-Meteo](https://open-meteo.com/) - Weather API
+- [OpenStreetMap](https://www.openstreetmap.org/) - Map data
+- [Leaflet](https://leafletjs.com/) - Mapping library
+- [Shadcn UI](https://ui.shadcn.com/) - UI components

@@ -1,5 +1,5 @@
-
 import { WeatherData } from "./types";
+import { convertKelvinToCelsius } from "./weather-utils";
 
 // Export to CSV
 export function exportToCSV(data: WeatherData[]): string {
@@ -7,8 +7,8 @@ export function exportToCSV(data: WeatherData[]): string {
   
   // Define CSV headers
   const headers = [
-    "ID", "Location Name", "Latitude", "Longitude", "Date", "Temperature", 
-    "Feels Like", "Min Temp", "Max Temp", "Pressure", "Humidity", 
+    "ID", "Location Name", "Latitude", "Longitude", "Date", "Temperature (°C)", 
+    "Feels Like (°C)", "Min Temp (°C)", "Max Temp (°C)", "Pressure", "Humidity", 
     "Visibility", "Wind Speed", "Wind Direction", "Clouds", "Weather Condition"
   ];
   
@@ -23,10 +23,10 @@ export function exportToCSV(data: WeatherData[]): string {
       item.location.lat,
       item.location.lon,
       item.date,
-      item.temp,
-      item.feels_like,
-      item.temp_min,
-      item.temp_max,
+      convertKelvinToCelsius(item.temp).toFixed(1),
+      convertKelvinToCelsius(item.feels_like).toFixed(1),
+      convertKelvinToCelsius(item.temp_min).toFixed(1),
+      convertKelvinToCelsius(item.temp_max).toFixed(1),
       item.pressure,
       item.humidity,
       item.visibility,
@@ -52,11 +52,25 @@ export function exportToCSV(data: WeatherData[]): string {
 
 // Export to JSON
 export function exportToJSON(data: WeatherData[]): string {
-  return JSON.stringify(data, null, 2);
+  // Create a deep copy and convert temperatures to Celsius for export
+  const convertedData = data.map(item => {
+    const convertedItem = { 
+      ...item,
+      temp: convertKelvinToCelsius(item.temp),
+      feels_like: convertKelvinToCelsius(item.feels_like),
+      temp_min: convertKelvinToCelsius(item.temp_min),
+      temp_max: convertKelvinToCelsius(item.temp_max),
+      // Add units for clarity
+      temp_unit: "celsius",
+    };
+    return convertedItem;
+  });
+  
+  return JSON.stringify(convertedData, null, 2);
 }
 
-// Export to XML
-export function exportToXML(data: WeatherData[]): string {
+// Fixed version of XML export with proper element names
+function exportToXMLWithProperNames(data: WeatherData[]): string {
   let xml = '<?xml version="1.0" encoding="UTF-8" ?>\n<WeatherData>\n';
   
   data.forEach(item => {
@@ -72,10 +86,10 @@ export function exportToXML(data: WeatherData[]): string {
     }
     xml += '    </Location>\n';
     xml += `    <Date>${item.date}</Date>\n`;
-    xml += `    <Temperature>${item.temp}</Temperature>\n`;
-    xml += `    <FeelsLike>${item.feels_like}</FeelsLike>\n`;
-    xml += `    <MinTemp>${item.temp_min}</MinTemp>\n`;
-    xml += `    <MaxTemp>${item.temp_max}</MaxTemp>\n`;
+    xml += `    <Temperature>${convertKelvinToCelsius(item.temp).toFixed(1)}</Temperature>\n`;
+    xml += `    <FeelsLike>${convertKelvinToCelsius(item.feels_like).toFixed(1)}</FeelsLike>\n`;
+    xml += `    <MinTemp>${convertKelvinToCelsius(item.temp_min).toFixed(1)}</MinTemp>\n`;
+    xml += `    <MaxTemp>${convertKelvinToCelsius(item.temp_max).toFixed(1)}</MaxTemp>\n`;
     xml += `    <Pressure>${item.pressure}</Pressure>\n`;
     xml += `    <Humidity>${item.humidity}</Humidity>\n`;
     xml += `    <Visibility>${item.visibility}</Visibility>\n`;
@@ -110,9 +124,9 @@ export function exportToMarkdown(data: WeatherData[]): string {
     md += `- **Date**: ${new Date(item.date).toLocaleDateString()}\n`;
     md += `- **Location**: ${item.location.name}, ${item.location.country || ''} ${item.location.state ? `(${item.location.state})` : ''}\n`;
     md += `- **Coordinates**: ${item.location.lat.toFixed(4)}, ${item.location.lon.toFixed(4)}\n`;
-    md += `- **Temperature**: ${(item.temp - 273.15).toFixed(1)}°C / ${((item.temp - 273.15) * 9/5 + 32).toFixed(1)}°F\n`;
-    md += `- **Feels Like**: ${(item.feels_like - 273.15).toFixed(1)}°C\n`;
-    md += `- **Min/Max**: ${(item.temp_min - 273.15).toFixed(1)}°C / ${(item.temp_max - 273.15).toFixed(1)}°C\n`;
+    md += `- **Temperature**: ${convertKelvinToCelsius(item.temp).toFixed(1)}°C / ${(convertKelvinToCelsius(item.temp) * 9/5 + 32).toFixed(1)}°F\n`;
+    md += `- **Feels Like**: ${convertKelvinToCelsius(item.feels_like).toFixed(1)}°C\n`;
+    md += `- **Min/Max**: ${convertKelvinToCelsius(item.temp_min).toFixed(1)}°C / ${convertKelvinToCelsius(item.temp_max).toFixed(1)}°C\n`;
     md += `- **Humidity**: ${item.humidity}%\n`;
     md += `- **Pressure**: ${item.pressure} hPa\n`;
     md += `- **Wind**: ${item.wind_speed.toFixed(1)} m/s, ${item.wind_deg}°\n`;
@@ -158,7 +172,7 @@ export function exportData(data: WeatherData[], format: string, fileName?: strin
       extension = 'json';
       break;
     case 'xml':
-      content = exportToXML(data);
+      content = exportToXMLWithProperNames(data);
       contentType = 'application/xml';
       extension = 'xml';
       break;

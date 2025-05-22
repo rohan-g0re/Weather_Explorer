@@ -318,13 +318,20 @@ const Index = () => {
               </div>
             )}
             
+            {selectedLocation && (
+              <SimpleMap 
+                location={selectedLocation} 
+                title={`Current Location: ${selectedLocation.name}`}
+              />
+            )}
+            
             {!currentWeather && selectedLocation && (
               <div className="text-center py-8 glass-card rounded-xl">
                 <p className="text-white text-lg">
                   Location selected: <strong>{selectedLocation.name}</strong>
                 </p>
                 <p className="text-white/80 mt-2">
-                  Select a date range and click "Search Historical Weather" to view weather data
+                  Select a date range and click "GET WEATHER" to view weather data
                 </p>
               </div>
             )}
@@ -355,14 +362,17 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="map">
-            {selectedLocation ? (
-              <SimpleMap location={selectedLocation} />
+            {savedWeather.length > 0 ? (
+              <SimpleMap 
+                locations={getUniqueLocations(savedWeather)}
+                title="All Saved Locations"
+              />
             ) : (
               <div className="text-center py-12 glass-card rounded-xl">
                 <MapPin className="h-16 w-16 mx-auto text-white/50 mb-4" />
-                <h2 className="text-2xl font-medium text-white">No location selected</h2>
+                <h2 className="text-2xl font-medium text-white">No locations saved</h2>
                 <p className="text-white/80 mt-2">
-                  Search for a location to see it on the map
+                  Search for a location and save weather data to see it on the map
                 </p>
               </div>
             )}
@@ -382,6 +392,20 @@ const Index = () => {
       />
     </div>
   );
+};
+
+// Helper function to get unique locations from saved weather data
+const getUniqueLocations = (weatherData: WeatherData[]): WeatherLocation[] => {
+  const locationMap = new Map<string, WeatherLocation>();
+  
+  weatherData.forEach(data => {
+    const key = `${data.location.lat}-${data.location.lon}`;
+    if (!locationMap.has(key)) {
+      locationMap.set(key, data.location);
+    }
+  });
+  
+  return Array.from(locationMap.values());
 };
 
 export default Index;
